@@ -1,0 +1,16 @@
+{
+	"LambdaContactForm": {
+		"Type": "AWS::Lambda::Function",
+		"Properties": {
+			"FunctionName": "Front-End-Contact-Form",
+			"Code": {
+				"ZipFile": "exports.handler = async (event) => {return true;};"
+			},
+			"Handler": "index.handler",
+			"MemorySize": 128,
+			"Role": { "Fn::GetAtt" : ["LambdaContactFormRole", "Arn"] },
+			"Runtime": "nodejs6.10",
+			"Timeout": 60
+		}
+	}
+}

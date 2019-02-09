@@ -1,0 +1,15 @@
+{
+	"CognitoUserPoolClients": {
+		"Type": "AWS::Cognito::UserPoolClient",
+		"Properties": {
+			"ClientName": "Web",
+			"ExplicitAuthFlows": [ "ADMIN_NO_SRP_AUTH" ],
+			"GenerateSecret": false,
+			"ReadAttributes": [
+				"email"
+			],
+			"RefreshTokenValidity": 30,
+			"UserPoolId": { "Ref": "CognitoUserPool" }
+		}
+	}
+}

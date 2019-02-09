@@ -1,0 +1,20 @@
+{
+	"CodeBuildContactFormRole": {
+		"Type": "AWS::IAM::Role",
+		"Properties": {
+			"RoleName": "front_end_codebuild_contact_form",
+			"AssumeRolePolicyDocument": {
+				"Version": "2012-10-17",
+				"Statement": [
+					{
+						"Effect": "Allow",
+						"Principal": {
+							"Service": "codebuild.amazonaws.com"
+						},
+						"Action": "sts:AssumeRole"
+					}
+				]
+			}
+		}
+	}
+}

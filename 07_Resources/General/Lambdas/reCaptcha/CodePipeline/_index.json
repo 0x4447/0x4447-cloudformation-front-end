@@ -1,0 +1,65 @@
+{
+	"CodePipelineRecaptcha": {
+		"Type": "AWS::CodePipeline::Pipeline",
+		"Properties": {
+			"Name": "front_end_lambda_recaptcha",
+			"ArtifactStore": {
+				"Location": { "Ref": "CodePipelineArtifacts" },
+				"Type": "S3"
+			},
+			"RoleArn": { "Fn::GetAtt": ["CodePipelineRecaptchaRole", "Arn" ] },
+			"Stages": [
+				{
+					"Name": "Get",
+					"Actions": [
+						{
+							"Name": "Material",
+							"RunOrder": 1,
+							"ActionTypeId": {
+								"Category": "Source",
+								"Owner": "ThirdParty",
+								"Provider": "GitHub",
+								"Version": "1"
+							},
+							"Configuration": {
+								"Owner": "Retireryte",
+								"Repo": "Rr-Lambda-Plan-Cron-Check",
+								"Branch": { "Ref": "Stage" },
+								"PollForSourceChanges": true,
+								"OAuthToken": { "Ref": "GitHubToken" }
+							},
+							"OutputArtifacts": [
+								{
+									"Name": "source_code"
+								}
+							]
+						}
+					]
+				},
+				{
+					"Name": "Cast",
+					"Actions": [
+						{
+							"Name": "Mold",
+							"RunOrder": 1,
+							"InputArtifacts": [
+								{
+									"Name": "source_code"
+								}
+							],
+							"Configuration": {
+								"ProjectName": { "Ref": "CodeBuildRecaptcha" }
+							},
+							"ActionTypeId": {
+								"Category": "Build",
+								"Owner": "AWS",
+								"Provider": "CodeBuild",
+								"Version": "1"
+							}
+						}
+					]
+				}
+			]
+		}
+	}
+}

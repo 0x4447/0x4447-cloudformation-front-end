@@ -1,0 +1,21 @@
+{
+	"CognitoIdentityPoolPolicyLCF": {
+		"Type": "AWS::IAM::Policy",
+		"Properties": {
+			"PolicyName": "lambda_contact_form",
+			"Roles": [ { "Ref": "CognitoIDPUnauthenticatedRole" } ],
+			"PolicyDocument": {
+				"Version": "2012-10-17",
+				"Statement": [
+					{
+						"Effect": "Allow",
+						"Action": [
+							"dynamodb:InvockeFunction"
+						],
+						"Resource": { "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${LambdaContactForm}" }
+					}
+				]
+			}
+		}
+	}
+}

@@ -1,0 +1,28 @@
+{
+	"CognitoIDPUnauthenticatedRole": {
+		"Type": "AWS::IAM::Role",
+		"Properties": {
+			"RoleName": { "Fn::Sub": "0x4447_Cognito_Unauthenticated" },
+			"AssumeRolePolicyDocument": {
+				"Version": "2012-10-17",
+				"Statement": [
+					{
+						"Effect": "Allow",
+						"Principal": {
+							"Federated": "cognito-identity.amazonaws.com"
+						},
+						"Action": "sts:AssumeRoleWithWebIdentity",
+						"Condition": {
+							"StringEquals": {
+								"cognito-identity.amazonaws.com:aud": { "Ref": "CognitoIdentityPool" }
+							},
+							"ForAnyValue:StringLike": {
+								"cognito-identity.amazonaws.com:amr": "unauthenticated"
+							}
+						}
+					}
+				]
+			}
+		}
+	}
+}

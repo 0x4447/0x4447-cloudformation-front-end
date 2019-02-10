@@ -22,8 +22,8 @@
 								"Version": "1"
 							},
 							"Configuration": {
-								"Owner": "Retireryte",
-								"Repo": "Rr-Lambda-Plan-Cron-Check",
+								"Owner": "0x4447",
+								"Repo": "0x4447-project-basic-lambda-reCaptcha",
 								"Branch": { "Ref": "Stage" },
 								"PollForSourceChanges": true,
 								"OAuthToken": { "Ref": "GitHubToken" }

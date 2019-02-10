@@ -15,8 +15,8 @@
 							"logs:PutLogEvents"
 						],
 						"Resource": [
-							{ "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Lambda-Plan-Cron-Check" },
-							{ "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Lambda-Plan-Cron-Check:*" }
+							{ "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/front_end_lambda_recaptcha" },
+							{ "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/front_end_lambda_recaptcha:*" }
 						]
 					}
 				]

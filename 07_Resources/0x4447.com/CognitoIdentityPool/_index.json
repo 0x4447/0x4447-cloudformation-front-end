@@ -2,7 +2,7 @@
 	"CognitoIdentityPool": {
 		"Type": "AWS::Cognito::IdentityPool",
 		"Properties": {
-			"IdentityPoolName": "zer0x",
+			"IdentityPoolName": "zer0x_home",
 			"AllowUnauthenticatedIdentities": false,
 			"CognitoIdentityProviders": [
 				{

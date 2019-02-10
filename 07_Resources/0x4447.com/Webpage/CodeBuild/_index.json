@@ -2,7 +2,7 @@
 	"CodeBuildWebpageHome": {
 		"Type": "AWS::CodeBuild::Project",
 		"Properties": {
-			"Name": "lambda_webpage_home",
+			"Name": "front_end_webpage_home",
 			"ServiceRole": { "Fn::GetAtt": ["CodeBuildWebpageHomeRole", "Arn"] },
 			"TimeoutInMinutes": 60,
 			"Source": {

@@ -2,7 +2,7 @@
 	"CodeBuildRecaptcha": {
 		"Type": "AWS::CodeBuild::Project",
 		"Properties": {
-			"Name": "front_end_lambda-recaptcha",
+			"Name": "front_end_lambda_recaptcha",
 			"ServiceRole": { "Fn::GetAtt": ["CodeBuildRecaptchaRole", "Arn"] },
 			"TimeoutInMinutes": 60,
 			"Source": {

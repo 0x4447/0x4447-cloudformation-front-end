@@ -2,7 +2,7 @@
 	"CodeBuildContactForm": {
 		"Type": "AWS::CodeBuild::Project",
 		"Properties": {
-			"Name": "Lambda-Plan-Cron-Check",
+			"Name": "front_end_lambda_contact_form",
 			"ServiceRole": { "Fn::GetAtt": ["CodeBuildContactFormRole", "Arn"] },
 			"TimeoutInMinutes": 60,
 			"Source": {

@@ -2,7 +2,7 @@
 	"CodeBuildWebpageHomeRole": {
 		"Type": "AWS::IAM::Role",
 		"Properties": {
-			"RoleName": "Front-End-CodeBuild-Webpage-Home",
+			"RoleName": "front_end_homepage_codebuild",
 			"AssumeRolePolicyDocument": {
 				"Version": "2012-10-17",
 				"Statement": [

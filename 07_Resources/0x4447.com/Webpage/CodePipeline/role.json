@@ -2,7 +2,7 @@
 	"PipelineWebpageHomeRole": {
 		"Type": "AWS::IAM::Role",
 		"Properties": {
-			"RoleName": "CodePipeline-Plan-Cron-Check",
+			"RoleName": "front_end_homepage_codepipeline",
 			"AssumeRolePolicyDocument": {
 				"Version": "2012-10-17",
 				"Statement": [

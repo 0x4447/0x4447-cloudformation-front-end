@@ -2,7 +2,7 @@
 	"LambdaContactFormRole": {
 		"Type": "AWS::IAM::Role",
 		"Properties": {
-			"RoleName": "Contract-Sign-Up",
+			"RoleName": "front_end_contact_form_lambda",
 			"AssumeRolePolicyDocument": {
 				"Version": "2012-10-17",
 				"Statement": [

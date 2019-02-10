@@ -95,9 +95,7 @@
 		"CognitoIDPAuthenticatedRole": {
 			"Type": "AWS::IAM::Role",
 			"Properties": {
-				"RoleName": {
-					"Fn::Sub": "0x4447_Cognito_Authenticated"
-				},
+				"RoleName": "front_end_cognito_identitypool_authenticated",
 				"AssumeRolePolicyDocument": {
 					"Version": "2012-10-17",
 					"Statement": [
@@ -125,9 +123,7 @@
 		"CognitoIDPUnauthenticatedRole": {
 			"Type": "AWS::IAM::Role",
 			"Properties": {
-				"RoleName": {
-					"Fn::Sub": "0x4447_Cognito_Unauthenticated"
-				},
+				"RoleName": "front_end_cognito_identitypool_unauthenticated",
 				"AssumeRolePolicyDocument": {
 					"Version": "2012-10-17",
 					"Statement": [
@@ -147,104 +143,6 @@
 									"cognito-identity.amazonaws.com:amr": "unauthenticated"
 								}
 							}
-						}
-					]
-				}
-			}
-		},
-		"CodeBuildWebpageHome": {
-			"Type": "AWS::CodeBuild::Project",
-			"Properties": {
-				"Name": "lambda_webpage_home",
-				"ServiceRole": {
-					"Fn::GetAtt": [
-						"CodeBuildWebpageHomeRole",
-						"Arn"
-					]
-				},
-				"TimeoutInMinutes": 60,
-				"Source": {
-					"Type": "CODEPIPELINE",
-					"BuildSpec": "buildspec.yml"
-				},
-				"Artifacts": {
-					"Type": "CODEPIPELINE"
-				},
-				"Environment": {
-					"Type": "LINUX_CONTAINER",
-					"ComputeType": "BUILD_GENERAL1_SMALL",
-					"Image": "aws/codebuild/nodejs:8.11.0"
-				}
-			}
-		},
-		"CodeBuildWebpageHomeRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": "Front-End-CodeBuild-Webpage-Home",
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"Service": "codebuild.amazonaws.com"
-							},
-							"Action": "sts:AssumeRole"
-						}
-					]
-				}
-			}
-		},
-		"CodeBuildPlanCronCheckPolicyS3": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"Roles": [
-					{
-						"Ref": "CodeBuildContactFormRole"
-					}
-				],
-				"PolicyName": "s3_access",
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": "s3:*",
-							"Resource": {
-								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
-							}
-						}
-					]
-				}
-			}
-		},
-		"CodeBuildPlanCronCheckPolicyCWL": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"Roles": [
-					{
-						"Ref": "CodeBuildContactFormRole"
-					}
-				],
-				"PolicyName": "cloud_watch_log_access",
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": [
-								"logs:CreateLogGroup",
-								"logs:CreateLogStream",
-								"logs:PutLogEvents"
-							],
-							"Resource": [
-								{
-									"Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Lambda-Plan-Cron-Check"
-								},
-								{
-									"Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Lambda-Plan-Cron-Check:*"
-								}
-							]
 						}
 					]
 				}
@@ -329,7 +227,7 @@
 		"PipelineWebpageHomeRole": {
 			"Type": "AWS::IAM::Role",
 			"Properties": {
-				"RoleName": "CodePipeline-Plan-Cron-Check",
+				"RoleName": "front_end_homepage_codepipeline",
 				"AssumeRolePolicyDocument": {
 					"Version": "2012-10-17",
 					"Statement": [
@@ -377,6 +275,104 @@
 						"Ref": "CodePipelineContactFormRole"
 					}
 				],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": "s3:*",
+							"Resource": {
+								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
+							}
+						}
+					]
+				}
+			}
+		},
+		"CodeBuildWebpageHomeRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "front_end_homepage_codebuild",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "codebuild.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				}
+			}
+		},
+		"CodeBuildWebpageHome": {
+			"Type": "AWS::CodeBuild::Project",
+			"Properties": {
+				"Name": "lambda_webpage_home",
+				"ServiceRole": {
+					"Fn::GetAtt": [
+						"CodeBuildWebpageHomeRole",
+						"Arn"
+					]
+				},
+				"TimeoutInMinutes": 60,
+				"Source": {
+					"Type": "CODEPIPELINE",
+					"BuildSpec": "buildspec.yml"
+				},
+				"Artifacts": {
+					"Type": "CODEPIPELINE"
+				},
+				"Environment": {
+					"Type": "LINUX_CONTAINER",
+					"ComputeType": "BUILD_GENERAL1_SMALL",
+					"Image": "aws/codebuild/nodejs:8.11.0"
+				}
+			}
+		},
+		"CodeBuildPlanCronCheckPolicyCWL": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"Roles": [
+					{
+						"Ref": "CodeBuildContactFormRole"
+					}
+				],
+				"PolicyName": "cloud_watch_log_access",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"logs:CreateLogGroup",
+								"logs:CreateLogStream",
+								"logs:PutLogEvents"
+							],
+							"Resource": [
+								{
+									"Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Lambda-Plan-Cron-Check"
+								},
+								{
+									"Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Lambda-Plan-Cron-Check:*"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		"CodeBuildPlanCronCheckPolicyS3": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"Roles": [
+					{
+						"Ref": "CodeBuildContactFormRole"
+					}
+				],
+				"PolicyName": "s3_access",
 				"PolicyDocument": {
 					"Version": "2012-10-17",
 					"Statement": [
@@ -515,31 +511,6 @@
 				}
 			}
 		},
-		"DDBDashboard": {
-			"Type": "AWS::DynamoDB::Table",
-			"Properties": {
-				"TableName": "0x4447.com",
-				"AttributeDefinitions": [
-					{
-						"AttributeName": "cognito_id",
-						"AttributeType": "S"
-					}
-				],
-				"KeySchema": [
-					{
-						"AttributeName": "cognito_id",
-						"KeyType": "HASH"
-					}
-				],
-				"ProvisionedThroughput": {
-					"ReadCapacityUnits": 5,
-					"WriteCapacityUnits": 5
-				},
-				"StreamSpecification": {
-					"StreamViewType": "NEW_AND_OLD_IMAGES"
-				}
-			}
-		},
 		"CognitoUserPool": {
 			"Type": "AWS::Cognito::UserPool",
 			"Properties": {
@@ -593,6 +564,123 @@
 				"RefreshTokenValidity": 30,
 				"UserPoolId": {
 					"Ref": "CognitoUserPool"
+				}
+			}
+		},
+		"DDBDashboard": {
+			"Type": "AWS::DynamoDB::Table",
+			"Properties": {
+				"TableName": "0x4447.com",
+				"AttributeDefinitions": [
+					{
+						"AttributeName": "cognito_id",
+						"AttributeType": "S"
+					}
+				],
+				"KeySchema": [
+					{
+						"AttributeName": "cognito_id",
+						"KeyType": "HASH"
+					}
+				],
+				"ProvisionedThroughput": {
+					"ReadCapacityUnits": 5,
+					"WriteCapacityUnits": 5
+				},
+				"StreamSpecification": {
+					"StreamViewType": "NEW_AND_OLD_IMAGES"
+				}
+			}
+		},
+		"LambdaContactForm": {
+			"Type": "AWS::Lambda::Function",
+			"Properties": {
+				"FunctionName": "Front-End-Contact-Form",
+				"Code": {
+					"ZipFile": "exports.handler = async (event) => {return true;};"
+				},
+				"Handler": "index.handler",
+				"MemorySize": 128,
+				"Role": {
+					"Fn::GetAtt": [
+						"LambdaContactFormRole",
+						"Arn"
+					]
+				},
+				"Runtime": "nodejs6.10",
+				"Timeout": 60
+			}
+		},
+		"LambdaContactFormRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "front_end_contact_form_lambda",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "lambda.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+				]
+			}
+		},
+		"CodeBuildContactForm": {
+			"Type": "AWS::CodeBuild::Project",
+			"Properties": {
+				"Name": "Lambda-Plan-Cron-Check",
+				"ServiceRole": {
+					"Fn::GetAtt": [
+						"CodeBuildContactFormRole",
+						"Arn"
+					]
+				},
+				"TimeoutInMinutes": 60,
+				"Source": {
+					"Type": "CODEPIPELINE",
+					"BuildSpec": "buildspec.yml"
+				},
+				"Artifacts": {
+					"Type": "CODEPIPELINE"
+				},
+				"Environment": {
+					"Type": "LINUX_CONTAINER",
+					"ComputeType": "BUILD_GENERAL1_SMALL",
+					"Image": "aws/codebuild/nodejs:8.11.0",
+					"EnvironmentVariables": [
+						{
+							"Name": "FUNCTION_NAME",
+							"Type": "PLAINTEXT",
+							"Value": {
+								"Ref": "LambdaContactForm"
+							}
+						}
+					]
+				}
+			}
+		},
+		"CodeBuildContactFormRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "front_end_contact_form_codebuild",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "codebuild.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
 				}
 			}
 		},
@@ -675,7 +763,7 @@
 		"CodePipelineContactFormRole": {
 			"Type": "AWS::IAM::Role",
 			"Properties": {
-				"RoleName": "front_end_codepipeline_contact_form",
+				"RoleName": "front_end_contact_form_codepipeline",
 				"AssumeRolePolicyDocument": {
 					"Version": "2012-10-17",
 					"Statement": [
@@ -688,98 +776,6 @@
 						}
 					]
 				}
-			}
-		},
-		"CodeBuildContactForm": {
-			"Type": "AWS::CodeBuild::Project",
-			"Properties": {
-				"Name": "Lambda-Plan-Cron-Check",
-				"ServiceRole": {
-					"Fn::GetAtt": [
-						"CodeBuildContactFormRole",
-						"Arn"
-					]
-				},
-				"TimeoutInMinutes": 60,
-				"Source": {
-					"Type": "CODEPIPELINE",
-					"BuildSpec": "buildspec.yml"
-				},
-				"Artifacts": {
-					"Type": "CODEPIPELINE"
-				},
-				"Environment": {
-					"Type": "LINUX_CONTAINER",
-					"ComputeType": "BUILD_GENERAL1_SMALL",
-					"Image": "aws/codebuild/nodejs:8.11.0",
-					"EnvironmentVariables": [
-						{
-							"Name": "FUNCTION_NAME",
-							"Type": "PLAINTEXT",
-							"Value": {
-								"Ref": "LambdaContactForm"
-							}
-						}
-					]
-				}
-			}
-		},
-		"CodeBuildContactFormRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": "front_end_codebuild_contact_form",
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"Service": "codebuild.amazonaws.com"
-							},
-							"Action": "sts:AssumeRole"
-						}
-					]
-				}
-			}
-		},
-		"LambdaContactForm": {
-			"Type": "AWS::Lambda::Function",
-			"Properties": {
-				"FunctionName": "Front-End-Contact-Form",
-				"Code": {
-					"ZipFile": "exports.handler = async (event) => {return true;};"
-				},
-				"Handler": "index.handler",
-				"MemorySize": 128,
-				"Role": {
-					"Fn::GetAtt": [
-						"LambdaContactFormRole",
-						"Arn"
-					]
-				},
-				"Runtime": "nodejs6.10",
-				"Timeout": 60
-			}
-		},
-		"LambdaContactFormRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": "Contract-Sign-Up",
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"Service": "lambda.amazonaws.com"
-							},
-							"Action": "sts:AssumeRole"
-						}
-					]
-				},
-				"ManagedPolicyArns": [
-					"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-				]
 			}
 		},
 		"LambdaRecaptcha": {
@@ -804,7 +800,7 @@
 		"LambdaRecaptchaRole": {
 			"Type": "AWS::IAM::Role",
 			"Properties": {
-				"RoleName": "front_end_lambda_recaptcha",
+				"RoleName": "front_end_recaptcha_lambda",
 				"AssumeRolePolicyDocument": {
 					"Version": "2012-10-17",
 					"Statement": [
@@ -901,7 +897,7 @@
 		"CodePipelineRecaptchaRole": {
 			"Type": "AWS::IAM::Role",
 			"Properties": {
-				"RoleName": "front_end_codepipeline_recaptcha",
+				"RoleName": "front_end_recaptcha_codepipeline",
 				"AssumeRolePolicyDocument": {
 					"Version": "2012-10-17",
 					"Statement": [
@@ -911,29 +907,6 @@
 								"Service": "codepipeline.amazonaws.com"
 							},
 							"Action": "sts:AssumeRole"
-						}
-					]
-				}
-			}
-		},
-		"CodePipelineRecaptchaS3": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"PolicyName": "s3",
-				"Roles": [
-					{
-						"Ref": "CodePipelineRecaptchaRole"
-					}
-				],
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": "s3:*",
-							"Resource": {
-								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
-							}
 						}
 					]
 				}
@@ -958,6 +931,29 @@
 							],
 							"Resource": "*",
 							"Effect": "Allow"
+						}
+					]
+				}
+			}
+		},
+		"CodePipelineRecaptchaS3": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "s3",
+				"Roles": [
+					{
+						"Ref": "CodePipelineRecaptchaRole"
+					}
+				],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": "s3:*",
+							"Resource": {
+								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
+							}
 						}
 					]
 				}
@@ -1000,7 +996,7 @@
 		"CodeBuildRecaptchaRole": {
 			"Type": "AWS::IAM::Role",
 			"Properties": {
-				"RoleName": "front_end_codebuild_recaptcha",
+				"RoleName": "front_end_recaptcha_codebuild",
 				"AssumeRolePolicyDocument": {
 					"Version": "2012-10-17",
 					"Statement": [
@@ -1010,52 +1006,6 @@
 								"Service": "codebuild.amazonaws.com"
 							},
 							"Action": "sts:AssumeRole"
-						}
-					]
-				}
-			}
-		},
-		"CodeBuildRecaptchaLambdaUpdatePolicy": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"Roles": [
-					{
-						"Ref": "CodeBuildRecaptchaRole"
-					}
-				],
-				"PolicyName": "update_lambda_code",
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": "lambda:UpdateFunctionCode",
-							"Resource": {
-								"Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaRecaptcha}"
-							}
-						}
-					]
-				}
-			}
-		},
-		"CodeBuildRecaptchaS3Policy": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"Roles": [
-					{
-						"Ref": "CodeBuildRecaptchaRole"
-					}
-				],
-				"PolicyName": "s3_access",
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": "s3:*",
-							"Resource": {
-								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
-							}
 						}
 					]
 				}
@@ -1088,6 +1038,52 @@
 									"Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Lambda-Plan-Cron-Check:*"
 								}
 							]
+						}
+					]
+				}
+			}
+		},
+		"CodeBuildRecaptchaS3Policy": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"Roles": [
+					{
+						"Ref": "CodeBuildRecaptchaRole"
+					}
+				],
+				"PolicyName": "s3_access",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": "s3:*",
+							"Resource": {
+								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
+							}
+						}
+					]
+				}
+			}
+		},
+		"CodeBuildRecaptchaLambdaUpdatePolicy": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"Roles": [
+					{
+						"Ref": "CodeBuildRecaptchaRole"
+					}
+				],
+				"PolicyName": "update_lambda_code",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": "lambda:UpdateFunctionCode",
+							"Resource": {
+								"Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaRecaptcha}"
+							}
 						}
 					]
 				}

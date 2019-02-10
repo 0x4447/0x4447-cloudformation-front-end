@@ -2,7 +2,7 @@
 	"CognitoIDPAuthenticatedRole": {
 		"Type": "AWS::IAM::Role",
 		"Properties": {
-			"RoleName": { "Fn::Sub": "0x4447_Cognito_Authenticated" },
+			"RoleName": "front_end_cognito_identitypool_authenticated",
 			"AssumeRolePolicyDocument": {
 				"Version": "2012-10-17",
 				"Statement": [

@@ -2,7 +2,7 @@
 	"CodePipelineRecaptchaRole": {
 		"Type": "AWS::IAM::Role",
 		"Properties": {
-			"RoleName": "front_end_codepipeline_recaptcha",
+			"RoleName": "front_end_recaptcha_codepipeline",
 			"AssumeRolePolicyDocument": {
 				"Version": "2012-10-17",
 				"Statement": [

@@ -2,7 +2,7 @@
 	"CodeBuildContactFormRole": {
 		"Type": "AWS::IAM::Role",
 		"Properties": {
-			"RoleName": "front_end_codebuild_contact_form",
+			"RoleName": "front_end_contact_form_codebuild",
 			"AssumeRolePolicyDocument": {
 				"Version": "2012-10-17",
 				"Statement": [

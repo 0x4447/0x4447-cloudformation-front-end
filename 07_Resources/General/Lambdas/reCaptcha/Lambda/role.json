@@ -2,7 +2,7 @@
 	"LambdaRecaptchaRole": {
 		"Type": "AWS::IAM::Role",
 		"Properties": {
-			"RoleName": "front_end_lambda_recaptcha",
+			"RoleName": "front_end_recaptcha_lambda",
 			"AssumeRolePolicyDocument": {
 				"Version": "2012-10-17",
 				"Statement": [

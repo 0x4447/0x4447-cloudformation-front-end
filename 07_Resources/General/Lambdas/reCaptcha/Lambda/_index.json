@@ -2,7 +2,7 @@
 	"LambdaRecaptcha": {
 		"Type": "AWS::Lambda::Function",
 		"Properties": {
-			"FunctionName": "Front-End-reCaptcha",
+			"FunctionName": "front_end_recaptcha",
 			"Code": {
 				"ZipFile": "exports.handler = async (event) => {return true;};"
 			},

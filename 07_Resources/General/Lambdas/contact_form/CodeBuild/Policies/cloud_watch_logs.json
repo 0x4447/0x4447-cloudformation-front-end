@@ -1,5 +1,5 @@
 {
-	"CodeBuildPlanCronCheckPolicyCWL": {
+	"CodeBuildContactFormPolicyCWL": {
 		"Type": "AWS::IAM::Policy",
 		"Properties": {
 			"Roles": [ { "Ref": "CodeBuildContactFormRole" } ],

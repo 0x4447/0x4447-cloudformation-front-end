@@ -30,7 +30,7 @@
 							},
 							"OutputArtifacts": [
 								{
-									"Name": "source_code"
+									"Name": "material"
 								}
 							]
 						}
@@ -44,7 +44,7 @@
 							"RunOrder": 1,
 							"InputArtifacts": [
 								{
-									"Name": "source_code"
+									"Name": "material"
 								}
 							],
 							"Configuration": {

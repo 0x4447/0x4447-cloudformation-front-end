@@ -1,5 +1,5 @@
 {
-	"CodeBuildRecaptchaCWLPolicy": {
+	"CodeBuildRecaptchaPolicyCWL": {
 		"Type": "AWS::IAM::Policy",
 		"Properties": {
 			"Roles": [ { "Ref": "CodeBuildRecaptchaRole" } ],

@@ -1,9 +1,9 @@
 {
-	"CodeBuildPlanCronCheckPolicyS3": {
+	"CodeBuildWebpageHomePolicyS3": {
 		"Type": "AWS::IAM::Policy",
 		"Properties": {
 			"Roles": [ { "Ref": "CodeBuildWebpageHomeRole" } ],
-			"PolicyName": "s3_access",
+			"PolicyName": "s3_artifact",
 			"PolicyDocument": {
 				"Version": "2012-10-17",
 				"Statement": [

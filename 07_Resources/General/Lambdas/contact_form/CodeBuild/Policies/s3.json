@@ -1,5 +1,5 @@
 {
-	"CodeBuildPlanCronCheckPolicyS3": {
+	"CodeBuildContactFormPolicyS3": {
 		"Type": "AWS::IAM::Policy",
 		"Properties": {
 			"Roles": [ { "Ref": "CodeBuildContactFormRole" } ],

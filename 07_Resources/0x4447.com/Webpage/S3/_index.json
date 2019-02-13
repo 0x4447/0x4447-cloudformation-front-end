@@ -3,7 +3,7 @@
 		"Type": "AWS::S3::Bucket",
 		"Properties": {
 			"AccessControl": "PublicRead",
-			"BucketName": "0x4447-webpage-home",
+			"BucketName": { "Fn::Sub": "${DomainHomePage}" },
 			"CorsConfiguration": {
 				"CorsRules": [
 					{

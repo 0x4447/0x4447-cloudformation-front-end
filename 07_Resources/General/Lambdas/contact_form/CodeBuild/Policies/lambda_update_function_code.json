@@ -3,7 +3,7 @@
 		"Type": "AWS::IAM::Policy",
 		"Properties": {
 			"Roles": [ { "Ref": "CodeBuildContactFormRole" } ],
-			"PolicyName": "update_lambda_code",
+			"PolicyName": "lambda_update_function_code",
 			"PolicyDocument": {
 				"Version": "2012-10-17",
 				"Statement": [

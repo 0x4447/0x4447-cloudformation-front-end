@@ -3,7 +3,7 @@
 		"Type": "AWS::IAM::Policy",
 		"Properties": {
 			"Roles": [ { "Ref": "CodeBuildContactFormRole" } ],
-			"PolicyName": "s3_access",
+			"PolicyName": "s3_artifact_access",
 			"PolicyDocument": {
 				"Version": "2012-10-17",
 				"Statement": [

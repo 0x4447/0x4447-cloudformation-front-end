@@ -1,9 +1,9 @@
 {
-	"CodePipelineRecaptchaPolicyS3": {
+	"CodeBuildWebpageHomePolicyS3": {
 		"Type": "AWS::IAM::Policy",
 		"Properties": {
-			"PolicyName": "s3",
-			"Roles": [ { "Ref": "CodePipelineRecaptchaRole" } ],
+			"Roles": [ { "Ref": "CodeBuildWebpageHomeRole" } ],
+			"PolicyName": "s3_artifact_access",
 			"PolicyDocument": {
 				"Version": "2012-10-17",
 				"Statement": [

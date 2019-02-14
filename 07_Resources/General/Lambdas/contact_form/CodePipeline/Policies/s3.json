@@ -1,5 +1,5 @@
 {
-	"PipelinePlanCronCheckPolicyS3": {
+	"CodePipelineContactFormPolicyS3": {
 		"Type": "AWS::IAM::Policy",
 		"Properties": {
 			"PolicyName": "s3",

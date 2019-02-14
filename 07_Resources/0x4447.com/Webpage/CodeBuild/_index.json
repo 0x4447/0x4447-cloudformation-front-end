@@ -17,7 +17,10 @@
 				"ComputeType": "BUILD_GENERAL1_SMALL",
 				"Image": "aws/codebuild/nodejs:8.11.0",
 				"EnvironmentVariables": [
-					{ "Name": "S3_BUCKET", "Type": "PLAINTEXT", "Value": { "Ref": "S3WebpageHome" } }
+					{ "Name": "S3_BUCKET", "Type": "PLAINTEXT", "Value": { "Ref": "S3WebpageHome" } },
+					{ "Name": "CONTACT_FORM_NAME", "Type": "PLAINTEXT", "Value": { "Ref": "S3WebpageHome" } },
+					{ "Name": "IDENTITY_POOL_ID", "Type": "PLAINTEXT", "Value": { "Ref": "CognitoIdentityPool" } },
+					{ "Name": "AWS_REGION", "Type": "PLAINTEXT", "Value": { "Ref": "AWS::Region" } }
 				]
 			}
 		}

@@ -1,9 +1,9 @@
  {
-	"CodeBuildContactForm": {
+	"CodeBuildSendEmail": {
 		"Type": "AWS::CodeBuild::Project",
 		"Properties": {
-			"Name": "front_end_lambda_contact_form",
-			"ServiceRole": { "Fn::GetAtt": ["CodeBuildContactFormRole", "Arn"] },
+			"Name": "front_end_lambda_send_email",
+			"ServiceRole": { "Fn::GetAtt": ["CodeBuildSendEmailRole", "Arn"] },
 			"TimeoutInMinutes": 60,
 			"Source": {
 				"Type": "CODEPIPELINE",
@@ -17,7 +17,7 @@
 				"ComputeType": "BUILD_GENERAL1_SMALL",
 				"Image": "aws/codebuild/nodejs:8.11.0",
 				"EnvironmentVariables": [
-					{ "Name": "FUNCTION_NAME", "Type": "PLAINTEXT", "Value": { "Ref": "LambdaContactForm" } }
+					{ "Name": "FUNCTION_NAME", "Type": "PLAINTEXT", "Value": { "Ref": "LambdaSendEmail" } }
 				]
 			}
 		}

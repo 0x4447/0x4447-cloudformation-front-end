@@ -1,9 +1,9 @@
 {
-	"CodePipelineContactFormPolicyCB": {
+	"CodePipelineFormContactPolicyCB": {
 		"Type": "AWS::IAM::Policy",
 		"Properties": {
 			"PolicyName": "code_build",
-			"Roles": [ { "Ref": "CodePipelineContactFormRole" } ],
+			"Roles": [ { "Ref": "CodePipelineFormContactRole" } ],
 			"PolicyDocument": {
 				"Version": "2012-10-17",
 				"Statement": [
@@ -13,7 +13,7 @@
 							"codebuild:BatchGetBuilds",
 							"codebuild:StartBuild"
 						],
-						"Resource": { "Fn::Sub": "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildContactForm}" }
+						"Resource": { "Fn::Sub": "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildFormContact}" }
 					}
 				]
 			}

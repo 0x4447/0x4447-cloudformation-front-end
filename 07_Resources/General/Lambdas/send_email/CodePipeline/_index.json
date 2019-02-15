@@ -1,13 +1,13 @@
 {
-	"CodePipelineContactForm": {
+	"CodePipelineSendEmail": {
 		"Type": "AWS::CodePipeline::Pipeline",
 		"Properties": {
-			"Name": "front_end_lambda_contact_form",
+			"Name": "front_end_lambda_send_email",
 			"ArtifactStore": {
 				"Location": { "Ref": "CodePipelineArtifacts" },
 				"Type": "S3"
 			},
-			"RoleArn": { "Fn::GetAtt": ["CodePipelineContactFormRole", "Arn" ] },
+			"RoleArn": { "Fn::GetAtt": ["CodePipelineSendEmailRole", "Arn" ] },
 			"Stages": [
 				{
 					"Name": "Get",
@@ -48,7 +48,7 @@
 								}
 							],
 							"Configuration": {
-								"ProjectName": { "Ref": "CodeBuildContactForm" }
+								"ProjectName": { "Ref": "CodeBuildSendEmail" }
 							},
 							"ActionTypeId": {
 								"Category": "Build",

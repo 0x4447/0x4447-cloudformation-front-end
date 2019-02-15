@@ -1,0 +1,10 @@
+{
+	"SecretManagerRecaptcha": {
+		"Type": "AWS::SecretsManager::Secret",
+		"Properties": {
+			"Description": "Holds the Google reCaptcha credentials.",
+			"Name": "reCaptcha_home",
+			"SecretString": "{ \"SECRET\": \"\"}"
+		}
+	}
+}

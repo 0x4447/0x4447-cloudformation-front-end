@@ -1,8 +1,8 @@
 {
-	"LambdaContactFormRole": {
+	"LambdaFormContactRole": {
 		"Type": "AWS::IAM::Role",
 		"Properties": {
-			"RoleName": "front_end_contact_form_lambda",
+			"RoleName": "front_end_form_contact_lambda",
 			"AssumeRolePolicyDocument": {
 				"Version": "2012-10-17",
 				"Statement": [

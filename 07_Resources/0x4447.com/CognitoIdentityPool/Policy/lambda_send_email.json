@@ -2,7 +2,7 @@
 	"CognitoIdentityPoolPolicyLCF": {
 		"Type": "AWS::IAM::Policy",
 		"Properties": {
-			"PolicyName": "lambda_contact_form",
+			"PolicyName": "lambda_send_email",
 			"Roles": [ { "Ref": "CognitoIDPUnauthenticatedRole" } ],
 			"PolicyDocument": {
 				"Version": "2012-10-17",
@@ -12,7 +12,7 @@
 						"Action": [
 							"dynamodb:InvockeFunction"
 						],
-						"Resource": { "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${LambdaContactForm}" }
+						"Resource": { "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${LambdaSendEmail}" }
 					}
 				]
 			}

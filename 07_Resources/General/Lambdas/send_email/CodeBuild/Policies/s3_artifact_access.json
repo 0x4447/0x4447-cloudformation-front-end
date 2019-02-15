@@ -1,15 +1,15 @@
 {
-	"CodePipelineContactFormPolicyS3": {
+	"CodeBuildSendEmailPolicyS3": {
 		"Type": "AWS::IAM::Policy",
 		"Properties": {
-			"PolicyName": "s3",
-			"Roles": [ { "Ref": "CodePipelineContactFormRole" } ],
+			"Roles": [ { "Ref": "CodeBuildSendEmailRole" } ],
+			"PolicyName": "s3_artifact_access",
 			"PolicyDocument": {
 				"Version": "2012-10-17",
 				"Statement": [
 					{
 						"Effect": "Allow",
-						"Action": "s3:*",
+						"Action": "s3:GetObject",
 						"Resource": { "Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"}
 					}
 				]

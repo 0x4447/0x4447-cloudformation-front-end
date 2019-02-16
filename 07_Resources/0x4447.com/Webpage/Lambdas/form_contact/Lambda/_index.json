@@ -10,7 +10,13 @@
 			"MemorySize": 128,
 			"Role": { "Fn::GetAtt" : ["LambdaFormContactRole", "Arn"] },
 			"Runtime": "nodejs6.10",
-			"Timeout": 60
+			"Timeout": 60,
+			"Environment": {
+				"Variables" : {
+					"LAMBDA_RECAPTCHA": { "Ref": "LambdaRecaptcha" },
+					"LAMBDA_SEND_EMAIL": { "Ref": "LambdaRecaptcha" }
+				}
+			}
 		}
 	}
 }

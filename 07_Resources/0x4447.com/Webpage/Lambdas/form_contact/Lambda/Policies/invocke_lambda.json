@@ -10,7 +10,10 @@
 					{
 						"Effect": "Allow",
 						"Action": "lambda:InvokeFunction",
-						"Resource": { "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaSendEmail}"}
+						"Resource": [
+							{ "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaSendEmail}"},
+							{ "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaRecaptcha}"}
+						]
 					}
 				]
 			}

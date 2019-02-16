@@ -1,0 +1,19 @@
+{
+	"LambdaSendEmailPolicySES": {
+		"Type": "AWS::IAM::Policy",
+		"Properties": {
+			"PolicyName": "ses_send_email",
+			"Roles": [ { "Ref": "LambdaSendEmailRole" } ],
+			"PolicyDocument": {
+				"Version": "2012-10-17",
+				"Statement": [
+					{
+						"Effect": "Allow",
+						"Action": "ses:SendEmail",
+						"Resource": "*"
+					}
+				]
+			}
+		}
+	}
+}

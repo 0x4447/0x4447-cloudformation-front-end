@@ -13,7 +13,6 @@
 			"Timeout": 60,
 			"Environment": {
 				"Variables" : {
-					"LAMBDA_RECAPTCHA": { "Ref": "LambdaRecaptcha" },
 					"LAMBDA_SEND_EMAIL": { "Ref": "LambdaSendEmail" },
 					"FROM": { "Ref": "EmailFrom" },
 					"TO": { "Ref": "EmailTo" }

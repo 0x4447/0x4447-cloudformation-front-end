@@ -33,6 +33,10 @@
 					}
 				}],
 				"Aliases": [ { "Fn::Sub": "${DomainHomePage}" } ],
+				"ViewerCertificate": {
+					"AcmCertificateArn" : { "Ref": "CertificateARN" },
+					"SslSupportMethod": "sni-only"
+				},
 				"DefaultRootObject": "home",
 				"HttpVersion": "http2",
 				"IPV6Enabled": true,

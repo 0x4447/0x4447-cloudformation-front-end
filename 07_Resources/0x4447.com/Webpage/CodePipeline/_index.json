@@ -23,9 +23,9 @@
 							},
 							"Configuration": {
 								"Owner": "0x4447",
-								"Repo": "0x4447-web-0x4447.com",
+								"Repo": "0x4447_project_home_webpage",
 								"Branch": { "Ref": "Stage" },
-								"PollForSourceChanges": true,
+								"PollForSourceChanges": false,
 								"OAuthToken": { "Ref": "GitHubToken" }
 							},
 							"OutputArtifacts": [

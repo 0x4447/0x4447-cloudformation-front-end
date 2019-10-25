@@ -22,10 +22,10 @@
 								"Version": "1"
 							},
 							"Configuration": {
-								"Owner": { "Ref": "ParamGitHubAccountName" },
-								"Repo": "0x4447-project-basic-lambda-send-email",
+								"Owner": "0x4447-basics",
+								"Repo": "0x4447_lambda_send_email",
 								"Branch": { "Ref": "Stage" },
-								"PollForSourceChanges": true,
+								"PollForSourceChanges": false,
 								"OAuthToken": { "Ref": "GitHubToken" }
 							},
 							"OutputArtifacts": [

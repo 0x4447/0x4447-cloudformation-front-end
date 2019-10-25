@@ -22,8 +22,8 @@
 								"Version": "1"
 							},
 							"Configuration": {
-								"Owner": { "Ref": "ParamGitHubAccountName" },
-								"Repo": "0x4447_project_home_webpage",
+								"Owner": "0x4447-office",
+								"Repo": "0x4447_webpage_home",
 								"Branch": { "Ref": "Stage" },
 								"PollForSourceChanges": false,
 								"OAuthToken": { "Ref": "GitHubToken" }

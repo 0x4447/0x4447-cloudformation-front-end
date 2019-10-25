@@ -22,10 +22,10 @@
 								"Version": "1"
 							},
 							"Configuration": {
-								"Owner": { "Ref": "ParamGitHubAccountName" },
-								"Repo": "0x4447-lambda-form-contact-submit",
+								"Owner": "0x4447-office",
+								"Repo": "0x4447_webpage_home_lambda_submit_contact",
 								"Branch": { "Ref": "Stage" },
-								"PollForSourceChanges": true,
+								"PollForSourceChanges": false,
 								"OAuthToken": { "Ref": "GitHubToken" }
 							},
 							"OutputArtifacts": [

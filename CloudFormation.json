@@ -10,14 +10,6 @@
 			"Description": "The legal name of your company.",
 			"Type": "String"
 		},
-		"DomainHomePage": {
-			"Description": "Type your domain for your project",
-			"Type": "String"
-		},
-		"YearEstablished": {
-			"Description": "The year in which the company was created.",
-			"Type": "String"
-		},
 		"EmailFrom": {
 			"Description": "You need to create a Personal access tokens (https://github.com/settings/tokens) for CodePipeline to have access to the GitHub repo despite it being public.",
 			"Type": "String"
@@ -42,9 +34,34 @@
 		"EmailTo": {
 			"Description": "You need to create a Personal access tokens (https://github.com/settings/tokens) for CodePipeline to have access to the GitHub repo despite it being public.",
 			"Type": "String"
+		},
+		"YearEstablished": {
+			"Description": "The year in which the company was created.",
+			"Type": "String"
+		},
+		"DomainHomePage": {
+			"Description": "Type your domain for your project",
+			"Type": "String"
 		}
 	},
 	"Resources": {
+		"CognitoUserPoolClients": {
+			"Type": "AWS::Cognito::UserPoolClient",
+			"Properties": {
+				"ClientName": "Web",
+				"ExplicitAuthFlows": [
+					"ADMIN_NO_SRP_AUTH"
+				],
+				"GenerateSecret": false,
+				"ReadAttributes": [
+					"email"
+				],
+				"RefreshTokenValidity": 30,
+				"UserPoolId": {
+					"Ref": "CognitoUserPool"
+				}
+			}
+		},
 		"CognitoUserPool": {
 			"Type": "AWS::Cognito::UserPool",
 			"Properties": {
@@ -82,23 +99,6 @@
 						"Required": true
 					}
 				]
-			}
-		},
-		"CognitoUserPoolClients": {
-			"Type": "AWS::Cognito::UserPoolClient",
-			"Properties": {
-				"ClientName": "Web",
-				"ExplicitAuthFlows": [
-					"ADMIN_NO_SRP_AUTH"
-				],
-				"GenerateSecret": false,
-				"ReadAttributes": [
-					"email"
-				],
-				"RefreshTokenValidity": 30,
-				"UserPoolId": {
-					"Ref": "CognitoUserPool"
-				}
 			}
 		},
 		"CodeBuildSendEmail": {
@@ -887,24 +887,6 @@
 				}
 			}
 		},
-		"CodeBuildWebpageHomeRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": "front_end_webpage_home_codebuild",
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"Service": "codebuild.amazonaws.com"
-							},
-							"Action": "sts:AssumeRole"
-						}
-					]
-				}
-			}
-		},
 		"CodeBuildWebpageHome": {
 			"Type": "AWS::CodeBuild::Project",
 			"Properties": {
@@ -960,24 +942,19 @@
 				}
 			}
 		},
-		"CodeBuildWebpageHomePolicyCloudFrontList": {
-			"Type": "AWS::IAM::Policy",
+		"CodeBuildWebpageHomeRole": {
+			"Type": "AWS::IAM::Role",
 			"Properties": {
-				"Roles": [
-					{
-						"Ref": "CodeBuildWebpageHomeRole"
-					}
-				],
-				"PolicyName": "cloud_front_list",
-				"PolicyDocument": {
+				"RoleName": "front_end_webpage_home_codebuild",
+				"AssumeRolePolicyDocument": {
 					"Version": "2012-10-17",
 					"Statement": [
 						{
 							"Effect": "Allow",
-							"Action": [
-								"cloudfront:ListDistributions"
-							],
-							"Resource": "*"
+							"Principal": {
+								"Service": "codebuild.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
 						}
 					]
 				}
@@ -1038,29 +1015,6 @@
 				}
 			}
 		},
-		"CodeBuildWebpageHomePolicyS3Hosting": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"Roles": [
-					{
-						"Ref": "CodeBuildWebpageHomeRole"
-					}
-				],
-				"PolicyName": "s3_hosting",
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": "s3:PutObject",
-							"Resource": {
-								"Fn::Sub": "arn:aws:s3:::${S3WebpageHome}/*"
-							}
-						}
-					]
-				}
-			}
-		},
 		"CodeBuildWebpageHomePolicyS3": {
 			"Type": "AWS::IAM::Policy",
 			"Properties": {
@@ -1079,6 +1033,55 @@
 							"Resource": {
 								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
 							}
+						}
+					]
+				}
+			}
+		},
+		"CodeBuildWebpageHomePolicyS3Hosting": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"Roles": [
+					{
+						"Ref": "CodeBuildWebpageHomeRole"
+					}
+				],
+				"PolicyName": "s3_hosting",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"s3:PutObject",
+								"s3:DeleteObject"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:s3:::${S3WebpageHome}/*"
+							}
+						}
+					]
+				}
+			}
+		},
+		"CodeBuildWebpageHomePolicyCloudFrontList": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"Roles": [
+					{
+						"Ref": "CodeBuildWebpageHomeRole"
+					}
+				],
+				"PolicyName": "cloud_front_list",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"cloudfront:ListDistributions"
+							],
+							"Resource": "*"
 						}
 					]
 				}
@@ -1178,6 +1181,29 @@
 				}
 			}
 		},
+		"CodePipelineFormContactPolicyS3": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "s3",
+				"Roles": [
+					{
+						"Ref": "CodePipelineFormContactRole"
+					}
+				],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": "s3:*",
+							"Resource": {
+								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
+							}
+						}
+					]
+				}
+			}
+		},
 		"CodePipelineFormContactPolicyCB": {
 			"Type": "AWS::IAM::Policy",
 			"Properties": {
@@ -1198,29 +1224,6 @@
 							],
 							"Resource": {
 								"Fn::Sub": "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildFormContact}"
-							}
-						}
-					]
-				}
-			}
-		},
-		"CodePipelineFormContactPolicyS3": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"PolicyName": "s3",
-				"Roles": [
-					{
-						"Ref": "CodePipelineFormContactRole"
-					}
-				],
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": "s3:*",
-							"Resource": {
-								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
 							}
 						}
 					]

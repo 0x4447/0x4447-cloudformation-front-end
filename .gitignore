@@ -1,2 +1,3 @@
 node_modules/
 **/*.DS_Store
+/07_Resources/General/.DS_Store

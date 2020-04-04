@@ -10,6 +10,14 @@
 			"Description": "The legal name of your company.",
 			"Type": "String"
 		},
+		"YearEstablished": {
+			"Description": "The year in which the company was created.",
+			"Type": "String"
+		},
+		"DomainHomePage": {
+			"Description": "Type your domain for your project",
+			"Type": "String"
+		},
 		"EmailFrom": {
 			"Description": "You need to create a Personal access tokens (https://github.com/settings/tokens) for CodePipeline to have access to the GitHub repo despite it being public.",
 			"Type": "String"
@@ -34,34 +42,9 @@
 		"EmailTo": {
 			"Description": "You need to create a Personal access tokens (https://github.com/settings/tokens) for CodePipeline to have access to the GitHub repo despite it being public.",
 			"Type": "String"
-		},
-		"YearEstablished": {
-			"Description": "The year in which the company was created.",
-			"Type": "String"
-		},
-		"DomainHomePage": {
-			"Description": "Type your domain for your project",
-			"Type": "String"
 		}
 	},
 	"Resources": {
-		"CognitoUserPoolClients": {
-			"Type": "AWS::Cognito::UserPoolClient",
-			"Properties": {
-				"ClientName": "Web",
-				"ExplicitAuthFlows": [
-					"ADMIN_NO_SRP_AUTH"
-				],
-				"GenerateSecret": false,
-				"ReadAttributes": [
-					"email"
-				],
-				"RefreshTokenValidity": 30,
-				"UserPoolId": {
-					"Ref": "CognitoUserPool"
-				}
-			}
-		},
 		"CognitoUserPool": {
 			"Type": "AWS::Cognito::UserPool",
 			"Properties": {
@@ -99,6 +82,23 @@
 						"Required": true
 					}
 				]
+			}
+		},
+		"CognitoUserPoolClients": {
+			"Type": "AWS::Cognito::UserPoolClient",
+			"Properties": {
+				"ClientName": "Web",
+				"ExplicitAuthFlows": [
+					"ADMIN_NO_SRP_AUTH"
+				],
+				"GenerateSecret": false,
+				"ReadAttributes": [
+					"email"
+				],
+				"RefreshTokenValidity": 30,
+				"UserPoolId": {
+					"Ref": "CognitoUserPool"
+				}
 			}
 		},
 		"CodeBuildSendEmail": {
@@ -226,6 +226,67 @@
 							"Resource": {
 								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
 							}
+						}
+					]
+				}
+			}
+		},
+		"LambdaSendEmail": {
+			"Type": "AWS::Lambda::Function",
+			"Properties": {
+				"FunctionName": "front_end_send_email",
+				"Code": {
+					"ZipFile": "exports.handler = async (event) => {return true;};"
+				},
+				"Handler": "index.handler",
+				"MemorySize": 128,
+				"Role": {
+					"Fn::GetAtt": [
+						"LambdaSendEmailRole",
+						"Arn"
+					]
+				},
+				"Runtime": "nodejs8.10",
+				"Timeout": 60
+			}
+		},
+		"LambdaSendEmailRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "front_end_send_email_lambda",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "lambda.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+				]
+			}
+		},
+		"LambdaSendEmailPolicySES": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "ses_send_email",
+				"Roles": [
+					{
+						"Ref": "LambdaSendEmailRole"
+					}
+				],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": "ses:SendRawEmail",
+							"Resource": "*"
 						}
 					]
 				}
@@ -402,67 +463,6 @@
 				}
 			}
 		},
-		"LambdaSendEmail": {
-			"Type": "AWS::Lambda::Function",
-			"Properties": {
-				"FunctionName": "front_end_send_email",
-				"Code": {
-					"ZipFile": "exports.handler = async (event) => {return true;};"
-				},
-				"Handler": "index.handler",
-				"MemorySize": 128,
-				"Role": {
-					"Fn::GetAtt": [
-						"LambdaSendEmailRole",
-						"Arn"
-					]
-				},
-				"Runtime": "nodejs8.10",
-				"Timeout": 60
-			}
-		},
-		"LambdaSendEmailRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": "front_end_send_email_lambda",
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"Service": "lambda.amazonaws.com"
-							},
-							"Action": "sts:AssumeRole"
-						}
-					]
-				},
-				"ManagedPolicyArns": [
-					"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-				]
-			}
-		},
-		"LambdaSendEmailPolicySES": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"PolicyName": "ses_send_email",
-				"Roles": [
-					{
-						"Ref": "LambdaSendEmailRole"
-					}
-				],
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": "ses:SendRawEmail",
-							"Resource": "*"
-						}
-					]
-				}
-			}
-		},
 		"CognitoIdentityPool": {
 			"Type": "AWS::Cognito::IdentityPool",
 			"Properties": {
@@ -481,28 +481,6 @@
 						}
 					}
 				]
-			}
-		},
-		"CognitoIdentityPoolRoleAttachment": {
-			"Type": "AWS::Cognito::IdentityPoolRoleAttachment",
-			"Properties": {
-				"IdentityPoolId": {
-					"Ref": "CognitoIdentityPool"
-				},
-				"Roles": {
-					"authenticated": {
-						"Fn::GetAtt": [
-							"CognitoIDPAuthenticatedRole",
-							"Arn"
-						]
-					},
-					"unauthenticated": {
-						"Fn::GetAtt": [
-							"CognitoIDPUnauthenticatedRole",
-							"Arn"
-						]
-					}
-				}
 			}
 		},
 		"CognitoIDPAuthenticatedRole": {
@@ -530,6 +508,28 @@
 							}
 						}
 					]
+				}
+			}
+		},
+		"CognitoIdentityPoolRoleAttachment": {
+			"Type": "AWS::Cognito::IdentityPoolRoleAttachment",
+			"Properties": {
+				"IdentityPoolId": {
+					"Ref": "CognitoIdentityPool"
+				},
+				"Roles": {
+					"authenticated": {
+						"Fn::GetAtt": [
+							"CognitoIDPAuthenticatedRole",
+							"Arn"
+						]
+					},
+					"unauthenticated": {
+						"Fn::GetAtt": [
+							"CognitoIDPUnauthenticatedRole",
+							"Arn"
+						]
+					}
 				}
 			}
 		},
@@ -653,7 +653,7 @@
 						},
 						"SslSupportMethod": "sni-only"
 					},
-					"DefaultRootObject": "home",
+					"DefaultRootObject": "index.html",
 					"HttpVersion": "http2",
 					"IPV6Enabled": true,
 					"PriceClass": "PriceClass_100",
@@ -662,28 +662,6 @@
 							"RestrictionType": "none"
 						}
 					}
-				}
-			}
-		},
-		"S3WebpageHomePolicy": {
-			"Type": "AWS::S3::BucketPolicy",
-			"Properties": {
-				"Bucket": {
-					"Ref": "S3WebpageHome"
-				},
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Sid": "PublicReadGetObject",
-							"Effect": "Allow",
-							"Principal": "*",
-							"Action": "s3:GetObject",
-							"Resource": {
-								"Fn::Sub": "arn:aws:s3:::${S3WebpageHome}/*"
-							}
-						}
-					]
 				}
 			}
 		},
@@ -711,176 +689,27 @@
 					]
 				},
 				"WebsiteConfiguration": {
-					"ErrorDocument": "error",
-					"IndexDocument": "home"
+					"ErrorDocument": "error.html",
+					"IndexDocument": "index.html"
 				}
 			}
 		},
-		"PipelineWebpageHome": {
-			"Type": "AWS::CodePipeline::Pipeline",
+		"S3WebpageHomePolicy": {
+			"Type": "AWS::S3::BucketPolicy",
 			"Properties": {
-				"Name": "front_end_webpage_home",
-				"ArtifactStore": {
-					"Location": {
-						"Ref": "CodePipelineArtifacts"
-					},
-					"Type": "S3"
+				"Bucket": {
+					"Ref": "S3WebpageHome"
 				},
-				"RoleArn": {
-					"Fn::GetAtt": [
-						"PipelineWebpageHomeRole",
-						"Arn"
-					]
-				},
-				"Stages": [
-					{
-						"Name": "Get",
-						"Actions": [
-							{
-								"Name": "Material",
-								"RunOrder": 1,
-								"ActionTypeId": {
-									"Category": "Source",
-									"Owner": "ThirdParty",
-									"Provider": "GitHub",
-									"Version": "1"
-								},
-								"Configuration": {
-									"Owner": "0x4447-office",
-									"Repo": "0x4447_webpage_home",
-									"Branch": {
-										"Ref": "Stage"
-									},
-									"PollForSourceChanges": false,
-									"OAuthToken": {
-										"Ref": "GitHubToken"
-									}
-								},
-								"OutputArtifacts": [
-									{
-										"Name": "material"
-									}
-								]
-							}
-						]
-					},
-					{
-						"Name": "Cast",
-						"Actions": [
-							{
-								"Name": "Mold",
-								"RunOrder": 1,
-								"InputArtifacts": [
-									{
-										"Name": "material"
-									}
-								],
-								"Configuration": {
-									"ProjectName": {
-										"Ref": "CodeBuildWebpageHome"
-									}
-								},
-								"ActionTypeId": {
-									"Category": "Build",
-									"Owner": "AWS",
-									"Provider": "CodeBuild",
-									"Version": "1"
-								}
-							}
-						]
-					}
-				]
-			}
-		},
-		"PipelineWebpageHomeRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": "front_end_webpage_home_codepipeline",
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"Service": "codepipeline.amazonaws.com"
-							},
-							"Action": "sts:AssumeRole"
-						}
-					]
-				}
-			}
-		},
-		"PipelineWebpageHomeWebhook": {
-			"Type": "AWS::CodePipeline::Webhook",
-			"Properties": {
-				"Authentication": "GITHUB_HMAC",
-				"AuthenticationConfiguration": {
-					"SecretToken": {
-						"Ref": "GitHubToken"
-					}
-				},
-				"Filters": [
-					{
-						"JsonPath": "$.ref",
-						"MatchEquals": "refs/heads/{Branch}"
-					}
-				],
-				"TargetPipeline": {
-					"Ref": "PipelineWebpageHome"
-				},
-				"TargetAction": "Material",
-				"TargetPipelineVersion": {
-					"Fn::GetAtt": [
-						"PipelineWebpageHome",
-						"Version"
-					]
-				},
-				"RegisterWithThirdParty": true
-			}
-		},
-		"PipelineWebpageHomePolicyCB": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"PolicyName": "code_build",
-				"Roles": [
-					{
-						"Ref": "PipelineWebpageHomeRole"
-					}
-				],
 				"PolicyDocument": {
 					"Version": "2012-10-17",
 					"Statement": [
 						{
+							"Sid": "PublicReadGetObject",
 							"Effect": "Allow",
-							"Action": [
-								"codebuild:BatchGetBuilds",
-								"codebuild:StartBuild"
-							],
+							"Principal": "*",
+							"Action": "s3:GetObject",
 							"Resource": {
-								"Fn::Sub": "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildWebpageHome}"
-							}
-						}
-					]
-				}
-			}
-		},
-		"PipelineWebpageHomePolicyS3": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"PolicyName": "s3",
-				"Roles": [
-					{
-						"Ref": "PipelineWebpageHomeRole"
-					}
-				],
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": "s3:*",
-							"Resource": {
-								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
+								"Fn::Sub": "arn:aws:s3:::${S3WebpageHome}/*"
 							}
 						}
 					]
@@ -908,7 +737,7 @@
 				"Environment": {
 					"Type": "LINUX_CONTAINER",
 					"ComputeType": "BUILD_GENERAL1_SMALL",
-					"Image": "aws/codebuild/nodejs:8.11.0",
+					"Image": "aws/codebuild/standard:3.0",
 					"EnvironmentVariables": [
 						{
 							"Name": "S3_BUCKET",
@@ -929,6 +758,13 @@
 							"Type": "PLAINTEXT",
 							"Value": {
 								"Ref": "CognitoIdentityPool"
+							}
+						},
+						{
+							"Name": "DISTRIBUTION_ID",
+							"Type": "PLAINTEXT",
+							"Value": {
+								"Ref": "CloudFrontHome"
 							}
 						},
 						{
@@ -955,6 +791,29 @@
 								"Service": "codebuild.amazonaws.com"
 							},
 							"Action": "sts:AssumeRole"
+						}
+					]
+				}
+			}
+		},
+		"CodeBuildWebpageHomePolicyCloudFrontList": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"Roles": [
+					{
+						"Ref": "CodeBuildWebpageHomeRole"
+					}
+				],
+				"PolicyName": "cloud_front_list",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"cloudfront:ListDistributions"
+							],
+							"Resource": "*"
 						}
 					]
 				}
@@ -1064,33 +923,38 @@
 				}
 			}
 		},
-		"CodeBuildWebpageHomePolicyCloudFrontList": {
-			"Type": "AWS::IAM::Policy",
+		"PipelineWebpageHomeWebhook": {
+			"Type": "AWS::CodePipeline::Webhook",
 			"Properties": {
-				"Roles": [
+				"Authentication": "GITHUB_HMAC",
+				"AuthenticationConfiguration": {
+					"SecretToken": {
+						"Ref": "GitHubToken"
+					}
+				},
+				"Filters": [
 					{
-						"Ref": "CodeBuildWebpageHomeRole"
+						"JsonPath": "$.ref",
+						"MatchEquals": "refs/heads/{Branch}"
 					}
 				],
-				"PolicyName": "cloud_front_list",
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": [
-								"cloudfront:ListDistributions"
-							],
-							"Resource": "*"
-						}
+				"TargetPipeline": {
+					"Ref": "PipelineWebpageHome"
+				},
+				"TargetAction": "Material",
+				"TargetPipelineVersion": {
+					"Fn::GetAtt": [
+						"PipelineWebpageHome",
+						"Version"
 					]
-				}
+				},
+				"RegisterWithThirdParty": true
 			}
 		},
-		"CodePipelineFormContact": {
+		"PipelineWebpageHome": {
 			"Type": "AWS::CodePipeline::Pipeline",
 			"Properties": {
-				"Name": "front_end_lambda_form_contact",
+				"Name": "front_end_webpage_home",
 				"ArtifactStore": {
 					"Location": {
 						"Ref": "CodePipelineArtifacts"
@@ -1099,7 +963,7 @@
 				},
 				"RoleArn": {
 					"Fn::GetAtt": [
-						"CodePipelineFormContactRole",
+						"PipelineWebpageHomeRole",
 						"Arn"
 					]
 				},
@@ -1118,7 +982,7 @@
 								},
 								"Configuration": {
 									"Owner": "0x4447-office",
-									"Repo": "0x4447_webpage_home_lambda_submit_contact",
+									"Repo": "0x4447_webpage_home",
 									"Branch": {
 										"Ref": "Stage"
 									},
@@ -1129,7 +993,7 @@
 								},
 								"OutputArtifacts": [
 									{
-										"Name": "source_code"
+										"Name": "material"
 									}
 								]
 							}
@@ -1143,12 +1007,12 @@
 								"RunOrder": 1,
 								"InputArtifacts": [
 									{
-										"Name": "source_code"
+										"Name": "material"
 									}
 								],
 								"Configuration": {
 									"ProjectName": {
-										"Ref": "CodeBuildFormContact"
+										"Ref": "CodeBuildWebpageHome"
 									}
 								},
 								"ActionTypeId": {
@@ -1163,10 +1027,10 @@
 				]
 			}
 		},
-		"CodePipelineFormContactRole": {
+		"PipelineWebpageHomeRole": {
 			"Type": "AWS::IAM::Role",
 			"Properties": {
-				"RoleName": "front_end_form_contact_codepipeline",
+				"RoleName": "front_end_webpage_home_codepipeline",
 				"AssumeRolePolicyDocument": {
 					"Version": "2012-10-17",
 					"Statement": [
@@ -1181,36 +1045,13 @@
 				}
 			}
 		},
-		"CodePipelineFormContactPolicyS3": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"PolicyName": "s3",
-				"Roles": [
-					{
-						"Ref": "CodePipelineFormContactRole"
-					}
-				],
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": "s3:*",
-							"Resource": {
-								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
-							}
-						}
-					]
-				}
-			}
-		},
-		"CodePipelineFormContactPolicyCB": {
+		"PipelineWebpageHomePolicyCB": {
 			"Type": "AWS::IAM::Policy",
 			"Properties": {
 				"PolicyName": "code_build",
 				"Roles": [
 					{
-						"Ref": "CodePipelineFormContactRole"
+						"Ref": "PipelineWebpageHomeRole"
 					}
 				],
 				"PolicyDocument": {
@@ -1223,7 +1064,30 @@
 								"codebuild:StartBuild"
 							],
 							"Resource": {
-								"Fn::Sub": "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildFormContact}"
+								"Fn::Sub": "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildWebpageHome}"
+							}
+						}
+					]
+				}
+			}
+		},
+		"PipelineWebpageHomePolicyS3": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "s3",
+				"Roles": [
+					{
+						"Ref": "PipelineWebpageHomeRole"
+					}
+				],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": "s3:*",
+							"Resource": {
+								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
 							}
 						}
 					]
@@ -1433,6 +1297,149 @@
 									"Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaSendEmail}"
 								}
 							]
+						}
+					]
+				}
+			}
+		},
+		"CodePipelineFormContactRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "front_end_form_contact_codepipeline",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "codepipeline.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				}
+			}
+		},
+		"CodePipelineFormContact": {
+			"Type": "AWS::CodePipeline::Pipeline",
+			"Properties": {
+				"Name": "front_end_lambda_form_contact",
+				"ArtifactStore": {
+					"Location": {
+						"Ref": "CodePipelineArtifacts"
+					},
+					"Type": "S3"
+				},
+				"RoleArn": {
+					"Fn::GetAtt": [
+						"CodePipelineFormContactRole",
+						"Arn"
+					]
+				},
+				"Stages": [
+					{
+						"Name": "Get",
+						"Actions": [
+							{
+								"Name": "Material",
+								"RunOrder": 1,
+								"ActionTypeId": {
+									"Category": "Source",
+									"Owner": "ThirdParty",
+									"Provider": "GitHub",
+									"Version": "1"
+								},
+								"Configuration": {
+									"Owner": "0x4447-office",
+									"Repo": "0x4447_webpage_home_lambda_submit_contact",
+									"Branch": {
+										"Ref": "Stage"
+									},
+									"PollForSourceChanges": false,
+									"OAuthToken": {
+										"Ref": "GitHubToken"
+									}
+								},
+								"OutputArtifacts": [
+									{
+										"Name": "source_code"
+									}
+								]
+							}
+						]
+					},
+					{
+						"Name": "Cast",
+						"Actions": [
+							{
+								"Name": "Mold",
+								"RunOrder": 1,
+								"InputArtifacts": [
+									{
+										"Name": "source_code"
+									}
+								],
+								"Configuration": {
+									"ProjectName": {
+										"Ref": "CodeBuildFormContact"
+									}
+								},
+								"ActionTypeId": {
+									"Category": "Build",
+									"Owner": "AWS",
+									"Provider": "CodeBuild",
+									"Version": "1"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"CodePipelineFormContactPolicyCB": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "code_build",
+				"Roles": [
+					{
+						"Ref": "CodePipelineFormContactRole"
+					}
+				],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"codebuild:BatchGetBuilds",
+								"codebuild:StartBuild"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildFormContact}"
+							}
+						}
+					]
+				}
+			}
+		},
+		"CodePipelineFormContactPolicyS3": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "s3",
+				"Roles": [
+					{
+						"Ref": "CodePipelineFormContactRole"
+					}
+				],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": "s3:*",
+							"Resource": {
+								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
+							}
 						}
 					]
 				}

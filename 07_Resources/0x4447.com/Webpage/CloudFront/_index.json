@@ -12,7 +12,7 @@
 						"QueryString": false
 					},
 					"MinTTL": 0,
-					"TargetOriginId": { "Fn::GetAtt": ["S3WebpageHome", "DomainName"] },
+					"TargetOriginId": { "Fn::Sub": "${S3WebpageHome}.s3-website-${AWS::Region}.amazonaws.com" },
 					"ViewerProtocolPolicy": "redirect-to-https",
 					"AllowedMethods": ["GET", "HEAD"],
 					"CachedMethods": ["GET", "HEAD"],
@@ -23,8 +23,8 @@
 				},
 				"Enabled": true,
 				"Origins": [{
-					"DomainName": { "Fn::GetAtt": ["S3WebpageHome", "DomainName"] },
-					"Id": { "Fn::GetAtt": ["S3WebpageHome", "DomainName"] },
+					"DomainName": { "Fn::Sub": "${S3WebpageHome}.s3-website-${AWS::Region}.amazonaws.com" },
+					"Id": { "Fn::Sub": "${S3WebpageHome}.s3-website-${AWS::Region}.amazonaws.com" },
 					"CustomOriginConfig": {
 						"HTTPPort": 80,
 						"HTTPSPort": 443,

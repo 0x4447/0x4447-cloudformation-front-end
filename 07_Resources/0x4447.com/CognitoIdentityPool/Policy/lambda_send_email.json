@@ -1,16 +1,16 @@
 {
-	"CognitoIdentityPoolPolicyLCF": {
+	"CognitoIdentityPoolPolicyS3": {
 		"Type": "AWS::IAM::Policy",
 		"Properties": {
-			"PolicyName": "lambda_invocke",
+			"PolicyName": "s3",
 			"Roles": [ { "Ref": "CognitoIDPUnauthenticatedRole" } ],
 			"PolicyDocument": {
 				"Version": "2012-10-17",
 				"Statement": [
 					{
 						"Effect": "Allow",
-						"Action": "lambda:InvokeFunction",
-						"Resource": { "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaFormContact}" }
+						"Action": "S3:PutObject",
+						"Resource": "arn:aws:s3:::0x4447-web-us-east-1-smtp/*"
 					}
 				]
 			}

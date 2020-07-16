@@ -43,7 +43,8 @@
 				"PriceClass": "PriceClass_100",
 				"Restrictions": {
 					"GeoRestriction": {
-						"RestrictionType": "none"
+						"RestrictionType": "blacklist",
+						"Locations": [ "CN" ]
 					}
 				}
 			}

@@ -6,24 +6,16 @@
 			"Description": "The legal name of your company.",
 			"Type": "String"
 		},
-		"CodePipelineArtifacts": {
-			"Description": "The S3 bucket name where CodePipeline will store the artifacts (this is needed only by CP to work, and pass task results to the next stage).",
-			"Type": "String"
-		},
 		"YearEstablished": {
 			"Description": "The year in which the company was created.",
 			"Type": "String"
 		},
-		"EmailFrom": {
-			"Description": "You need to create a Personal access tokens (https://github.com/settings/tokens) for CodePipeline to have access to the GitHub repo despite it being public.",
-			"Type": "String"
-		},
-		"CertificateARN": {
-			"Description": "The ARN of a SSL Certificate.",
-			"Type": "String"
-		},
 		"DomainHomePage": {
 			"Description": "Type your domain for your project",
+			"Type": "String"
+		},
+		"CodePipelineArtifacts": {
+			"Description": "The S3 bucket name where CodePipeline will store the artifacts (this is needed only by CP to work, and pass task results to the next stage).",
 			"Type": "String"
 		},
 		"Stage": {
@@ -35,8 +27,16 @@
 			],
 			"Default": "development"
 		},
+		"EmailFrom": {
+			"Description": "You need to create a Personal access tokens (https://github.com/settings/tokens) for CodePipeline to have access to the GitHub repo despite it being public.",
+			"Type": "String"
+		},
 		"GitHubToken": {
 			"Description": "You need to create a Personal access tokens (https://github.com/settings/tokens) for CodePipeline to have access to the GitHub repo despite it being public.",
+			"Type": "String"
+		},
+		"CertificateARN": {
+			"Description": "The ARN of a SSL Certificate.",
 			"Type": "String"
 		},
 		"EmailTo": {
@@ -45,6 +45,23 @@
 		}
 	},
 	"Resources": {
+		"CognitoUserPoolClients": {
+			"Type": "AWS::Cognito::UserPoolClient",
+			"Properties": {
+				"ClientName": "Web",
+				"ExplicitAuthFlows": [
+					"ADMIN_NO_SRP_AUTH"
+				],
+				"GenerateSecret": false,
+				"ReadAttributes": [
+					"email"
+				],
+				"RefreshTokenValidity": 30,
+				"UserPoolId": {
+					"Ref": "CognitoUserPool"
+				}
+			}
+		},
 		"CognitoUserPool": {
 			"Type": "AWS::Cognito::UserPool",
 			"Properties": {
@@ -84,20 +101,235 @@
 				]
 			}
 		},
-		"CognitoUserPoolClients": {
-			"Type": "AWS::Cognito::UserPoolClient",
+		"LambdaSendEmailRole": {
+			"Type": "AWS::IAM::Role",
 			"Properties": {
-				"ClientName": "Web",
-				"ExplicitAuthFlows": [
-					"ADMIN_NO_SRP_AUTH"
+				"RoleName": "front_end_send_email_lambda",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "lambda.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+				]
+			}
+		},
+		"LambdaSendEmail": {
+			"Type": "AWS::Lambda::Function",
+			"Properties": {
+				"FunctionName": "front_end_send_email",
+				"Code": {
+					"ZipFile": "exports.handler = async (event) => {return true;};"
+				},
+				"Handler": "index.handler",
+				"MemorySize": 128,
+				"Role": {
+					"Fn::GetAtt": [
+						"LambdaSendEmailRole",
+						"Arn"
+					]
+				},
+				"Runtime": "nodejs8.10",
+				"Timeout": 60
+			}
+		},
+		"LambdaSendEmailPolicySES": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "ses_send_email",
+				"Roles": [
+					{
+						"Ref": "LambdaSendEmailRole"
+					}
 				],
-				"GenerateSecret": false,
-				"ReadAttributes": [
-					"email"
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": "ses:SendRawEmail",
+							"Resource": "*"
+						}
+					]
+				}
+			}
+		},
+		"PipelineSendEmailWebhook": {
+			"Type": "AWS::CodePipeline::Webhook",
+			"Properties": {
+				"Authentication": "GITHUB_HMAC",
+				"AuthenticationConfiguration": {
+					"SecretToken": {
+						"Ref": "GitHubToken"
+					}
+				},
+				"Filters": [
+					{
+						"JsonPath": "$.ref",
+						"MatchEquals": "refs/heads/{Branch}"
+					}
 				],
-				"RefreshTokenValidity": 30,
-				"UserPoolId": {
-					"Ref": "CognitoUserPool"
+				"TargetPipeline": {
+					"Ref": "CodePipelineSendEmail"
+				},
+				"TargetAction": "Material",
+				"TargetPipelineVersion": {
+					"Fn::GetAtt": [
+						"CodePipelineSendEmail",
+						"Version"
+					]
+				},
+				"RegisterWithThirdParty": true
+			}
+		},
+		"CodePipelineSendEmail": {
+			"Type": "AWS::CodePipeline::Pipeline",
+			"Properties": {
+				"Name": "front_end_lambda_send_email",
+				"ArtifactStore": {
+					"Location": {
+						"Ref": "CodePipelineArtifacts"
+					},
+					"Type": "S3"
+				},
+				"RoleArn": {
+					"Fn::GetAtt": [
+						"CodePipelineSendEmailRole",
+						"Arn"
+					]
+				},
+				"Stages": [
+					{
+						"Name": "Get",
+						"Actions": [
+							{
+								"Name": "Material",
+								"RunOrder": 1,
+								"ActionTypeId": {
+									"Category": "Source",
+									"Owner": "ThirdParty",
+									"Provider": "GitHub",
+									"Version": "1"
+								},
+								"Configuration": {
+									"Owner": "0x4447-basics",
+									"Repo": "0x4447_lambda_send_email",
+									"Branch": {
+										"Ref": "Stage"
+									},
+									"PollForSourceChanges": false,
+									"OAuthToken": {
+										"Ref": "GitHubToken"
+									}
+								},
+								"OutputArtifacts": [
+									{
+										"Name": "source_code"
+									}
+								]
+							}
+						]
+					},
+					{
+						"Name": "Cast",
+						"Actions": [
+							{
+								"Name": "Mold",
+								"RunOrder": 1,
+								"InputArtifacts": [
+									{
+										"Name": "source_code"
+									}
+								],
+								"Configuration": {
+									"ProjectName": {
+										"Ref": "CodeBuildSendEmail"
+									}
+								},
+								"ActionTypeId": {
+									"Category": "Build",
+									"Owner": "AWS",
+									"Provider": "CodeBuild",
+									"Version": "1"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"CodePipelineSendEmailRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "front_end_send_email_codepipeline",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "codepipeline.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				}
+			}
+		},
+		"CodePipelineSendEmailPolicyCB": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "code_build",
+				"Roles": [
+					{
+						"Ref": "CodePipelineSendEmailRole"
+					}
+				],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"codebuild:BatchGetBuilds",
+								"codebuild:StartBuild"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildSendEmail}"
+							}
+						}
+					]
+				}
+			}
+		},
+		"CodePipelineSendEmailPolicyS3": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "s3",
+				"Roles": [
+					{
+						"Ref": "CodePipelineSendEmailRole"
+					}
+				],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": "s3:*",
+							"Resource": {
+								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
+							}
+						}
+					]
 				}
 			}
 		},
@@ -231,238 +463,6 @@
 				}
 			}
 		},
-		"CodePipelineSendEmail": {
-			"Type": "AWS::CodePipeline::Pipeline",
-			"Properties": {
-				"Name": "front_end_lambda_send_email",
-				"ArtifactStore": {
-					"Location": {
-						"Ref": "CodePipelineArtifacts"
-					},
-					"Type": "S3"
-				},
-				"RoleArn": {
-					"Fn::GetAtt": [
-						"CodePipelineSendEmailRole",
-						"Arn"
-					]
-				},
-				"Stages": [
-					{
-						"Name": "Get",
-						"Actions": [
-							{
-								"Name": "Material",
-								"RunOrder": 1,
-								"ActionTypeId": {
-									"Category": "Source",
-									"Owner": "ThirdParty",
-									"Provider": "GitHub",
-									"Version": "1"
-								},
-								"Configuration": {
-									"Owner": "0x4447-basics",
-									"Repo": "0x4447_lambda_send_email",
-									"Branch": {
-										"Ref": "Stage"
-									},
-									"PollForSourceChanges": false,
-									"OAuthToken": {
-										"Ref": "GitHubToken"
-									}
-								},
-								"OutputArtifacts": [
-									{
-										"Name": "source_code"
-									}
-								]
-							}
-						]
-					},
-					{
-						"Name": "Cast",
-						"Actions": [
-							{
-								"Name": "Mold",
-								"RunOrder": 1,
-								"InputArtifacts": [
-									{
-										"Name": "source_code"
-									}
-								],
-								"Configuration": {
-									"ProjectName": {
-										"Ref": "CodeBuildSendEmail"
-									}
-								},
-								"ActionTypeId": {
-									"Category": "Build",
-									"Owner": "AWS",
-									"Provider": "CodeBuild",
-									"Version": "1"
-								}
-							}
-						]
-					}
-				]
-			}
-		},
-		"CodePipelineSendEmailRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": "front_end_send_email_codepipeline",
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"Service": "codepipeline.amazonaws.com"
-							},
-							"Action": "sts:AssumeRole"
-						}
-					]
-				}
-			}
-		},
-		"PipelineSendEmailWebhook": {
-			"Type": "AWS::CodePipeline::Webhook",
-			"Properties": {
-				"Authentication": "GITHUB_HMAC",
-				"AuthenticationConfiguration": {
-					"SecretToken": {
-						"Ref": "GitHubToken"
-					}
-				},
-				"Filters": [
-					{
-						"JsonPath": "$.ref",
-						"MatchEquals": "refs/heads/{Branch}"
-					}
-				],
-				"TargetPipeline": {
-					"Ref": "CodePipelineSendEmail"
-				},
-				"TargetAction": "Material",
-				"TargetPipelineVersion": {
-					"Fn::GetAtt": [
-						"CodePipelineSendEmail",
-						"Version"
-					]
-				},
-				"RegisterWithThirdParty": true
-			}
-		},
-		"CodePipelineSendEmailPolicyS3": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"PolicyName": "s3",
-				"Roles": [
-					{
-						"Ref": "CodePipelineSendEmailRole"
-					}
-				],
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": "s3:*",
-							"Resource": {
-								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
-							}
-						}
-					]
-				}
-			}
-		},
-		"CodePipelineSendEmailPolicyCB": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"PolicyName": "code_build",
-				"Roles": [
-					{
-						"Ref": "CodePipelineSendEmailRole"
-					}
-				],
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": [
-								"codebuild:BatchGetBuilds",
-								"codebuild:StartBuild"
-							],
-							"Resource": {
-								"Fn::Sub": "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildSendEmail}"
-							}
-						}
-					]
-				}
-			}
-		},
-		"LambdaSendEmail": {
-			"Type": "AWS::Lambda::Function",
-			"Properties": {
-				"FunctionName": "front_end_send_email",
-				"Code": {
-					"ZipFile": "exports.handler = async (event) => {return true;};"
-				},
-				"Handler": "index.handler",
-				"MemorySize": 128,
-				"Role": {
-					"Fn::GetAtt": [
-						"LambdaSendEmailRole",
-						"Arn"
-					]
-				},
-				"Runtime": "nodejs8.10",
-				"Timeout": 60
-			}
-		},
-		"LambdaSendEmailRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": "front_end_send_email_lambda",
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"Service": "lambda.amazonaws.com"
-							},
-							"Action": "sts:AssumeRole"
-						}
-					]
-				},
-				"ManagedPolicyArns": [
-					"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-				]
-			}
-		},
-		"LambdaSendEmailPolicySES": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"PolicyName": "ses_send_email",
-				"Roles": [
-					{
-						"Ref": "LambdaSendEmailRole"
-					}
-				],
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": "ses:SendRawEmail",
-							"Resource": "*"
-						}
-					]
-				}
-			}
-		},
 		"CognitoIdentityPool": {
 			"Type": "AWS::Cognito::IdentityPool",
 			"Properties": {
@@ -499,6 +499,34 @@
 							"Effect": "Allow",
 							"Action": "S3:PutObject",
 							"Resource": "arn:aws:s3:::0x4447-web-us-east-1-smtp/*"
+						}
+					]
+				}
+			}
+		},
+		"CognitoIDPAuthenticatedRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "front_end_cognito_identitypool_authenticated",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Federated": "cognito-identity.amazonaws.com"
+							},
+							"Action": "sts:AssumeRoleWithWebIdentity",
+							"Condition": {
+								"StringEquals": {
+									"cognito-identity.amazonaws.com:aud": {
+										"Ref": "CognitoIdentityPool"
+									}
+								},
+								"ForAnyValue:StringLike": {
+									"cognito-identity.amazonaws.com:amr": "authenticated"
+								}
+							}
 						}
 					]
 				}
@@ -547,34 +575,6 @@
 								},
 								"ForAnyValue:StringLike": {
 									"cognito-identity.amazonaws.com:amr": "unauthenticated"
-								}
-							}
-						}
-					]
-				}
-			}
-		},
-		"CognitoIDPAuthenticatedRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": "front_end_cognito_identitypool_authenticated",
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"Federated": "cognito-identity.amazonaws.com"
-							},
-							"Action": "sts:AssumeRoleWithWebIdentity",
-							"Condition": {
-								"StringEquals": {
-									"cognito-identity.amazonaws.com:aud": {
-										"Ref": "CognitoIdentityPool"
-									}
-								},
-								"ForAnyValue:StringLike": {
-									"cognito-identity.amazonaws.com:amr": "authenticated"
 								}
 							}
 						}
@@ -650,32 +650,14 @@
 						"GeoRestriction": {
 							"RestrictionType": "blacklist",
 							"Locations": [
-								"CN"
+								"CN",
+								"LA",
+								"CU",
+								"VN",
+								"KP"
 							]
 						}
 					}
-				}
-			}
-		},
-		"S3WebpageHomePolicy": {
-			"Type": "AWS::S3::BucketPolicy",
-			"Properties": {
-				"Bucket": {
-					"Ref": "S3WebpageHome"
-				},
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Sid": "PublicReadGetObject",
-							"Effect": "Allow",
-							"Principal": "*",
-							"Action": "s3:GetObject",
-							"Resource": {
-								"Fn::Sub": "arn:aws:s3:::${S3WebpageHome}/*"
-							}
-						}
-					]
 				}
 			}
 		},
@@ -705,6 +687,28 @@
 				"WebsiteConfiguration": {
 					"ErrorDocument": "error/index.html",
 					"IndexDocument": "index.html"
+				}
+			}
+		},
+		"S3WebpageHomePolicy": {
+			"Type": "AWS::S3::BucketPolicy",
+			"Properties": {
+				"Bucket": {
+					"Ref": "S3WebpageHome"
+				},
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Sid": "PublicReadGetObject",
+							"Effect": "Allow",
+							"Principal": "*",
+							"Action": "s3:GetObject",
+							"Resource": {
+								"Fn::Sub": "arn:aws:s3:::${S3WebpageHome}/*"
+							}
+						}
+					]
 				}
 			}
 		},
@@ -788,52 +792,6 @@
 				}
 			}
 		},
-		"CodeBuildWebpageHomePolicyCloudFrontCreateInvalidation": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"Roles": [
-					{
-						"Ref": "CodeBuildWebpageHomeRole"
-					}
-				],
-				"PolicyName": "cloud_front_invalidate",
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": [
-								"cloudfront:CreateInvalidation"
-							],
-							"Resource": "*"
-						}
-					]
-				}
-			}
-		},
-		"CodeBuildWebpageHomePolicyCloudFrontList": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"Roles": [
-					{
-						"Ref": "CodeBuildWebpageHomeRole"
-					}
-				],
-				"PolicyName": "cloud_front_list",
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": [
-								"cloudfront:ListDistributions"
-							],
-							"Resource": "*"
-						}
-					]
-				}
-			}
-		},
 		"CodeBuildWebpageHomePolicyCWL": {
 			"Type": "AWS::IAM::Policy",
 			"Properties": {
@@ -866,7 +824,7 @@
 				}
 			}
 		},
-		"CodeBuildWebpageHomePolicyS3": {
+		"CodeBuildWebpageHomePolicyCloudFrontList": {
 			"Type": "AWS::IAM::Policy",
 			"Properties": {
 				"Roles": [
@@ -874,16 +832,39 @@
 						"Ref": "CodeBuildWebpageHomeRole"
 					}
 				],
-				"PolicyName": "s3_artifact_access",
+				"PolicyName": "cloud_front_list",
 				"PolicyDocument": {
 					"Version": "2012-10-17",
 					"Statement": [
 						{
 							"Effect": "Allow",
-							"Action": "s3:*",
-							"Resource": {
-								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
-							}
+							"Action": [
+								"cloudfront:ListDistributions"
+							],
+							"Resource": "*"
+						}
+					]
+				}
+			}
+		},
+		"CodeBuildWebpageHomePolicyCloudFrontCreateInvalidation": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"Roles": [
+					{
+						"Ref": "CodeBuildWebpageHomeRole"
+					}
+				],
+				"PolicyName": "cloud_front_invalidate",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"cloudfront:CreateInvalidation"
+							],
+							"Resource": "*"
 						}
 					]
 				}
@@ -909,6 +890,29 @@
 							],
 							"Resource": {
 								"Fn::Sub": "arn:aws:s3:::${S3WebpageHome}/*"
+							}
+						}
+					]
+				}
+			}
+		},
+		"CodeBuildWebpageHomePolicyS3": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"Roles": [
+					{
+						"Ref": "CodeBuildWebpageHomeRole"
+					}
+				],
+				"PolicyName": "s3_artifact_access",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": "s3:*",
+							"Resource": {
+								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
 							}
 						}
 					]
@@ -1086,79 +1090,19 @@
 				}
 			}
 		},
-		"LambdaFormContact": {
-			"Type": "AWS::Lambda::Function",
-			"Properties": {
-				"FunctionName": "front_end_form_contact",
-				"Code": {
-					"ZipFile": "exports.handler = async (event) => {return true;};"
-				},
-				"Handler": "index.handler",
-				"MemorySize": 128,
-				"Role": {
-					"Fn::GetAtt": [
-						"LambdaFormContactRole",
-						"Arn"
-					]
-				},
-				"Runtime": "nodejs12.x",
-				"Timeout": 60,
-				"Environment": {
-					"Variables": {
-						"LAMBDA_SEND_EMAIL": {
-							"Ref": "LambdaSendEmail"
-						},
-						"FROM": {
-							"Ref": "EmailFrom"
-						},
-						"TO": {
-							"Ref": "EmailTo"
-						}
-					}
-				}
-			}
-		},
-		"LambdaFormContactRole": {
+		"CodeBuildFormContactRole": {
 			"Type": "AWS::IAM::Role",
 			"Properties": {
-				"RoleName": "front_end_form_contact_lambda",
+				"RoleName": "front_end_form_contact_codebuild",
 				"AssumeRolePolicyDocument": {
 					"Version": "2012-10-17",
 					"Statement": [
 						{
 							"Effect": "Allow",
 							"Principal": {
-								"Service": "lambda.amazonaws.com"
+								"Service": "codebuild.amazonaws.com"
 							},
 							"Action": "sts:AssumeRole"
-						}
-					]
-				},
-				"ManagedPolicyArns": [
-					"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-				]
-			}
-		},
-		"LambdaFormContactPolicyInvocke": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"PolicyName": "lambda_invocke",
-				"Roles": [
-					{
-						"Ref": "LambdaFormContactRole"
-					}
-				],
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": "lambda:InvokeFunction",
-							"Resource": [
-								{
-									"Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaSendEmail}"
-								}
-							]
 						}
 					]
 				}
@@ -1198,24 +1142,6 @@
 				}
 			}
 		},
-		"CodeBuildFormContactRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": "front_end_form_contact_codebuild",
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"Service": "codebuild.amazonaws.com"
-							},
-							"Action": "sts:AssumeRole"
-						}
-					]
-				}
-			}
-		},
 		"CodeBuildFormContactPolicyLambdaUpdate": {
 			"Type": "AWS::IAM::Policy",
 			"Properties": {
@@ -1233,29 +1159,6 @@
 							"Action": "lambda:UpdateFunctionCode",
 							"Resource": {
 								"Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaFormContact}"
-							}
-						}
-					]
-				}
-			}
-		},
-		"CodeBuildFormContactPolicyS3": {
-			"Type": "AWS::IAM::Policy",
-			"Properties": {
-				"Roles": [
-					{
-						"Ref": "CodeBuildFormContactRole"
-					}
-				],
-				"PolicyName": "s3_artifact_access",
-				"PolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Action": "s3:GetObject",
-							"Resource": {
-								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
 							}
 						}
 					]
@@ -1289,6 +1192,29 @@
 									"Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/front_end_lambda_form_contact:*"
 								}
 							]
+						}
+					]
+				}
+			}
+		},
+		"CodeBuildFormContactPolicyS3": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"Roles": [
+					{
+						"Ref": "CodeBuildFormContactRole"
+					}
+				],
+				"PolicyName": "s3_artifact_access",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": "s3:GetObject",
+							"Resource": {
+								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
+							}
 						}
 					]
 				}
@@ -1432,6 +1358,84 @@
 							"Resource": {
 								"Fn::Sub": "arn:aws:s3:::${CodePipelineArtifacts}/*"
 							}
+						}
+					]
+				}
+			}
+		},
+		"LambdaFormContactRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "front_end_form_contact_lambda",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "lambda.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+				]
+			}
+		},
+		"LambdaFormContact": {
+			"Type": "AWS::Lambda::Function",
+			"Properties": {
+				"FunctionName": "front_end_form_contact",
+				"Code": {
+					"ZipFile": "exports.handler = async (event) => {return true;};"
+				},
+				"Handler": "index.handler",
+				"MemorySize": 128,
+				"Role": {
+					"Fn::GetAtt": [
+						"LambdaFormContactRole",
+						"Arn"
+					]
+				},
+				"Runtime": "nodejs12.x",
+				"Timeout": 60,
+				"Environment": {
+					"Variables": {
+						"LAMBDA_SEND_EMAIL": {
+							"Ref": "LambdaSendEmail"
+						},
+						"FROM": {
+							"Ref": "EmailFrom"
+						},
+						"TO": {
+							"Ref": "EmailTo"
+						}
+					}
+				}
+			}
+		},
+		"LambdaFormContactPolicyInvocke": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "lambda_invocke",
+				"Roles": [
+					{
+						"Ref": "LambdaFormContactRole"
+					}
+				],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": "lambda:InvokeFunction",
+							"Resource": [
+								{
+									"Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaSendEmail}"
+								}
+							]
 						}
 					]
 				}

@@ -44,7 +44,7 @@
 				"Restrictions": {
 					"GeoRestriction": {
 						"RestrictionType": "blacklist",
-						"Locations": [ "CN" ]
+						"Locations": [ "CN", "LA", "CU", "VN", "KP" ]
 					}
 				}
 			}

@@ -2,7 +2,7 @@
 	"CodeBuildFormContact": {
 		"Type": "AWS::CodeBuild::Project",
 		"Properties": {
-			"Name": "front_end_lambda_form_contact",
+			"Name": "webpage_home_form_contact_lambda",
 			"ServiceRole": { "Fn::GetAtt": ["CodeBuildFormContactRole", "Arn"] },
 			"TimeoutInMinutes": 60,
 			"Source": {

@@ -2,7 +2,7 @@
 	"CodePipelineFormContact": {
 		"Type": "AWS::CodePipeline::Pipeline",
 		"Properties": {
-			"Name": "front_end_lambda_form_contact",
+			"Name": "webpage_home_form_contact_lambda",
 			"ArtifactStore": {
 				"Location": { "Ref": "CodePipelineArtifacts" },
 				"Type": "S3"
